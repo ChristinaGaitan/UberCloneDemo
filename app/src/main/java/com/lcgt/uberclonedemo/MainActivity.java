@@ -2,6 +2,7 @@ package com.lcgt.uberclonedemo;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,6 +10,7 @@ import android.widget.CompoundButton;
 import android.widget.Switch;
 
 import com.parse.LogInCallback;
+import com.parse.Parse;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
 import com.parse.ParseUser;
@@ -16,6 +18,13 @@ import com.parse.ParseUser;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
+
+    public void redirectToActivity() {
+        if (ParseUser.getCurrentUser().getString(   "userType") == "Rider") {
+            Intent intent = new Intent(getApplicationContext(), RiderActivity.class);
+            startActivity(intent);
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
         }
 
         ParseUser.getCurrentUser().put("userType", userType);
-
         Log.i("UserType", userType);
+        redirectToActivity();
     }
 
     public void setUser() {
@@ -57,6 +66,7 @@ public class MainActivity extends AppCompatActivity {
             });
         } else if (ParseUser.getCurrentUser().get("userType") != null) {
             Log.i("UserType", (String) ParseUser.getCurrentUser().get("userType"));
+            redirectToActivity();
         }
     }
 }
