@@ -39,7 +39,7 @@ public class App extends Application {
 
 
 //      To allow anonymous user
-        ParseUser.enableAutomaticUser();
+//        ParseUser.enableAutomaticUser();
 
         ParseACL defaultACL = new ParseACL();
         defaultACL.setPublicReadAccess(true);
