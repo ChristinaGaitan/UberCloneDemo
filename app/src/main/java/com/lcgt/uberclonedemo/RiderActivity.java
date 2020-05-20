@@ -23,11 +23,15 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
+import com.parse.ParseQuery;
 import com.parse.ParseUser;
 import com.parse.SaveCallback;
+
+import java.util.List;
 
 public class RiderActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -36,23 +40,49 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
     LocationListener locationListener;
     Button callUberButton;
     Integer locationRequestCode = 1;
+    Boolean requestActive = false;
 
     public void callUber(View view) {
         Log.i("Info", "Call uber");
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            // Permission already granted
+        if (requestActive == true) {
+            cancelActiveRequest();
+        } else {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                // Permission already granted
 
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
 
-            Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+                Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-            if (lastKnownLocation != null) {
-                saveRequest(lastKnownLocation);
-            } else {
-                Toast.makeText(this, "Could not find location. Please try again later!", Toast.LENGTH_SHORT).show();
+                if (lastKnownLocation != null) {
+                    saveRequest(lastKnownLocation);
+                } else {
+                    Toast.makeText(this, "Could not find location. Please try again later!", Toast.LENGTH_SHORT).show();
+                }
             }
         }
+    }
+
+    public void cancelActiveRequest() {
+        String username = ParseUser.getCurrentUser().getUsername();
+        ParseQuery<ParseObject> query = new ParseQuery<>("Request");
+        query.whereEqualTo("username", username);
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if(e == null) {
+
+                    // Delete active request in Parse
+                    for (ParseObject object : objects) {
+                        object.deleteInBackground();
+                    }
+
+                    requestActive = false;
+                    callUberButton.setText("Call an Uber");
+                }
+            }
+        });
     }
 
     public void saveRequest(Location location) {
@@ -66,6 +96,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void done(ParseException e) {
                 if (e == null) {
+                    requestActive = true;
                     callUberButton.setText("Cancel Uber");
                 }
             }
@@ -94,8 +125,23 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
         callUberButton = findViewById(R.id.callUberButton);
 
+        findActiveRequest();
     }
 
+    public void findActiveRequest() {
+        String username = ParseUser.getCurrentUser().getUsername();
+        ParseQuery<ParseObject> query = new ParseQuery<>("Request");
+        query.whereEqualTo("username", username);
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if(e == null) {
+                    requestActive = true;
+                    callUberButton.setText("Cancel Uber");
+                }
+            }
+        });
+    }
 
     /**
      * Manipulates the map once available.
