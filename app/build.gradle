@@ -22,14 +22,14 @@ android {
             buildConfigField "String", "APP_ID", keystoreProperties['APP_ID']
             buildConfigField "String", "CLIENT_ID", keystoreProperties['CLIENT_ID']
             buildConfigField "String", "SERVER", keystoreProperties['SERVER']
-            resValue "string", "MAPS_API_KEY", keystoreProperties['MAPS_API_KEY']
+            resValue "string", "google_maps_api_key", keystoreProperties['google_maps_key']
         }
 
         release {
             buildConfigField "String", "APP_ID", keystoreProperties['APP_ID']
             buildConfigField "String", "CLIENT_ID", keystoreProperties['CLIENT_ID']
             buildConfigField "String", "SERVER", keystoreProperties['SERVER']
-            resValue "string", "MAPS_API_KEY", keystoreProperties['MAPS_API_KEY']
+            resValue "string", "google_maps_api_key", keystoreProperties['google_maps_key']
 
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
