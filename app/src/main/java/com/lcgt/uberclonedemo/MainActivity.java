@@ -14,13 +14,14 @@ import com.parse.Parse;
 import com.parse.ParseAnonymousUtils;
 import com.parse.ParseException;
 import com.parse.ParseUser;
+import com.parse.SaveCallback;
 
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
 
     public void redirectToActivity() {
-        if (ParseUser.getCurrentUser().getString(   "userType") == "Rider") {
+        if (ParseUser.getCurrentUser().getString("userType").equals("Rider")) {
             Intent intent = new Intent(getApplicationContext(), RiderActivity.class);
             startActivity(intent);
         }
@@ -48,8 +49,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         ParseUser.getCurrentUser().put("userType", userType);
+
+        ParseUser.getCurrentUser().saveInBackground(new SaveCallback() {
+            @Override
+            public void done(ParseException e) {
+                redirectToActivity();
+            }
+        });
         Log.i("UserType", userType);
-        redirectToActivity();
     }
 
     public void setUser() {
