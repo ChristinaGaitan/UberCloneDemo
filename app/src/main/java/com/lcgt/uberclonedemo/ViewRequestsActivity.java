@@ -41,6 +41,8 @@ public class ViewRequestsActivity extends AppCompatActivity {
     ArrayList<Double> requestLatitudes = new ArrayList<>();
     ArrayList<Double> requestLongitudes = new ArrayList<>();
 
+    ArrayList<String> usernames = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -62,12 +64,17 @@ public class ViewRequestsActivity extends AppCompatActivity {
 
                     Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
 
-                    if(requestLatitudes.size() > position && requestLongitudes.size() > position && lastKnownLocation != null) {
+                    if(requestLatitudes.size() > position &&
+                        requestLongitudes.size() > position &&
+                        usernames.size() > position &&
+                        lastKnownLocation != null)
+                    {
                         Intent intent = new Intent(getApplicationContext(), DriverLocationActivity.class);
                         intent.putExtra("requestLatitude", requestLatitudes.get(position));
                         intent.putExtra("requestLongitude", requestLongitudes.get(position));
                         intent.putExtra("driverLatitude", lastKnownLocation.getLatitude());
                         intent.putExtra("driverLongitude", lastKnownLocation.getLongitude());
+                        intent.putExtra("username", usernames.get(position));
 
                         startActivity(intent);
                     }
@@ -77,6 +84,48 @@ public class ViewRequestsActivity extends AppCompatActivity {
 
         setLocationManagerAndListener();
         validatePermissionGranted();
+    }
+
+
+    public void updateListViewMethod(Location location) {
+        if (location != null) {
+            final ParseGeoPoint geoPointLocation = new ParseGeoPoint(location.getLatitude(), location.getLongitude());
+
+            ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
+            query.whereNear("location", geoPointLocation);
+            query.setLimit(10);
+            query.findInBackground(new FindCallback<ParseObject>() {
+                @Override
+                public void done(List<ParseObject> objects, ParseException e) {
+                    if (e == null) {
+                        requests.clear();
+                        requestLatitudes.clear();
+                        requestLongitudes.clear();
+
+                        if (objects.size()> 0) {
+                            for (ParseObject requestObject : objects) {
+                                ParseGeoPoint requestObjectLocation = (ParseGeoPoint) requestObject.get("location");
+                                Double distanceInMiles = geoPointLocation.distanceInKilometersTo(requestObjectLocation);
+                                Double distanceInMilesOneDP = (double) Math.round(distanceInMiles * 10) / 10;
+
+                                requests.add(distanceInMilesOneDP.toString() + " Km");
+
+                                requestLatitudes.add(requestObjectLocation.getLatitude());
+                                requestLongitudes.add(requestObjectLocation.getLongitude());
+
+                                usernames.add(requestObject.get("username").toString());
+                            }
+
+                        } else {
+                            requests.add("No active requests nearby");
+                        }
+
+                        arrayAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+
     }
 
     public void setLocationManagerAndListener() {
@@ -135,45 +184,5 @@ public class ViewRequestsActivity extends AppCompatActivity {
             }
         }
     }
-
-    public void updateListViewMethod(Location location) {
-        if (location != null) {
-            final ParseGeoPoint geoPointLocation = new ParseGeoPoint(location.getLatitude(), location.getLongitude());
-
-            ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
-            query.whereNear("location", geoPointLocation);
-            query.setLimit(10);
-            query.findInBackground(new FindCallback<ParseObject>() {
-                @Override
-                public void done(List<ParseObject> objects, ParseException e) {
-                    if (e == null) {
-                        requests.clear();
-                        requestLatitudes.clear();
-                        requestLongitudes.clear();
-
-                        if (objects.size()> 0) {
-                            for (ParseObject requestObject : objects) {
-                                ParseGeoPoint requestObjectLocation = (ParseGeoPoint) requestObject.get("location");
-                                Double distanceInMiles = geoPointLocation.distanceInKilometersTo(requestObjectLocation);
-                                Double distanceInMilesOneDP = (double) Math.round(distanceInMiles * 10) / 10;
-
-                                requests.add(distanceInMilesOneDP.toString() + " Km");
-
-                                requestLatitudes.add(requestObjectLocation.getLatitude());
-                                requestLongitudes.add(requestObjectLocation.getLongitude());
-                            }
-
-                        } else {
-                            requests.add("No active requests nearby");
-                        }
-
-                        arrayAdapter.notifyDataSetChanged();
-                    }
-                }
-            });
-        }
-
-    }
-
 
 }
