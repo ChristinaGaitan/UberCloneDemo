@@ -21,8 +21,12 @@ import java.util.Objects;
 public class MainActivity extends AppCompatActivity {
 
     public void redirectToActivity() {
-        if (ParseUser.getCurrentUser().getString("userType").equals("Rider")) {
+        String currentUserType = ParseUser.getCurrentUser().getString("userType");
+        if (currentUserType.equals("Rider")) {
             Intent intent = new Intent(getApplicationContext(), RiderActivity.class);
+            startActivity(intent);
+        } else if (currentUserType.equals("Driver")) {
+            Intent intent = new Intent(getApplicationContext(), ViewRequestsActivity.class);
             startActivity(intent);
         }
     }
