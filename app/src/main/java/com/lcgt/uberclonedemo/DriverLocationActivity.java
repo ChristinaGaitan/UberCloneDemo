@@ -5,12 +5,17 @@ import androidx.fragment.app.FragmentActivity;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+
+import java.util.ArrayList;
 
 public class DriverLocationActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -44,13 +49,24 @@ public class DriverLocationActivity extends FragmentActivity implements OnMapRea
 
         Double driverLatitude = intent.getDoubleExtra("driverLatitude", 0);
         Double driverLongitude = intent.getDoubleExtra("driverLongitude", 0);
+        LatLng driverLocation = new LatLng(driverLatitude, driverLongitude);
 
         Double requestLatitude = intent.getDoubleExtra("requestLatitude", 0);
         Double requestLongitude = intent.getDoubleExtra("requestLongitude", 0);
+        LatLng requestLocation = new LatLng(requestLatitude, requestLongitude);
 
-        // Add a marker in Sydney and move the camera
-        LatLng driverLocation = new LatLng(driverLatitude, driverLongitude);
-        mMap.addMarker(new MarkerOptions().position(driverLocation).title("Your location"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(driverLocation));
+        ArrayList<Marker> markers = new ArrayList<>();
+        markers.add(mMap.addMarker(new MarkerOptions().position(driverLocation).title("Your location")));
+        markers.add(mMap.addMarker(new MarkerOptions().position(requestLocation).title("Request location")));
+
+        LatLngBounds.Builder builder = new LatLngBounds.Builder();
+        for(Marker marker : markers) {
+            builder.include(marker.getPosition());
+        }
+
+        LatLngBounds bounds = builder.build();
+        int padding = 50;
+        CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, padding);
+        mMap.animateCamera(cu);
     }
 }
