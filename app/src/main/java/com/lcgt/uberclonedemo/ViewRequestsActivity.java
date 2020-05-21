@@ -7,12 +7,15 @@ import androidx.core.content.ContextCompat;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -30,9 +33,13 @@ public class ViewRequestsActivity extends AppCompatActivity {
     ListView listView;
     ArrayList<String> requests = new ArrayList<>();
     ArrayAdapter arrayAdapter;
+
     LocationManager locationManager;
     LocationListener locationListener;
     Integer locationRequestCode = 1;
+
+    ArrayList<Double> requestLatitudes = new ArrayList<>();
+    ArrayList<Double> requestLongitudes = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +53,27 @@ public class ViewRequestsActivity extends AppCompatActivity {
         arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_list_item_1, requests);
         requests.add("Getting nearby requests");
         listView.setAdapter(arrayAdapter);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (ActivityCompat.checkSelfPermission(ViewRequestsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+                    ActivityCompat.checkSelfPermission(ViewRequestsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+
+                    Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                    if(requestLatitudes.size() > position && requestLongitudes.size() > position && lastKnownLocation != null) {
+                        Intent intent = new Intent(getApplicationContext(), DriverLocationActivity.class);
+                        intent.putExtra("requestLatitude", requestLatitudes.get(position));
+                        intent.putExtra("requestLongitude", requestLongitudes.get(position));
+                        intent.putExtra("driverLatitude", lastKnownLocation.getLatitude());
+                        intent.putExtra("driverLongitude", lastKnownLocation.getLongitude());
+
+                        startActivity(intent);
+                    }
+                }
+            }
+        });
 
         setLocationManagerAndListener();
         validatePermissionGranted();
@@ -78,7 +106,8 @@ public class ViewRequestsActivity extends AppCompatActivity {
     }
 
     public void validatePermissionGranted() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(ViewRequestsActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED &&
+            ActivityCompat.checkSelfPermission(ViewRequestsActivity.this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             // Permission already granted
 
             locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, locationListener);
@@ -109,7 +138,6 @@ public class ViewRequestsActivity extends AppCompatActivity {
 
     public void updateListViewMethod(Location location) {
         if (location != null) {
-            requests.clear();
             final ParseGeoPoint geoPointLocation = new ParseGeoPoint(location.getLatitude(), location.getLongitude());
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
@@ -119,6 +147,10 @@ public class ViewRequestsActivity extends AppCompatActivity {
                 @Override
                 public void done(List<ParseObject> objects, ParseException e) {
                     if (e == null) {
+                        requests.clear();
+                        requestLatitudes.clear();
+                        requestLongitudes.clear();
+
                         if (objects.size()> 0) {
                             for (ParseObject requestObject : objects) {
                                 ParseGeoPoint requestObjectLocation = (ParseGeoPoint) requestObject.get("location");
@@ -126,6 +158,9 @@ public class ViewRequestsActivity extends AppCompatActivity {
                                 Double distanceInMilesOneDP = (double) Math.round(distanceInMiles * 10) / 10;
 
                                 requests.add(distanceInMilesOneDP.toString() + " Km");
+
+                                requestLatitudes.add(requestObjectLocation.getLatitude());
+                                requestLongitudes.add(requestObjectLocation.getLongitude());
                             }
 
                         } else {
