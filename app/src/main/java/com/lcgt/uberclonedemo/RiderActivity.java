@@ -166,6 +166,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                                             handler.postDelayed(new Runnable() {
                                                 @Override
                                                 public void run() {
+                                                    infoTextView.setText("");
                                                     callUberButton.setVisibility(View.VISIBLE);
                                                     callUberButton.setText("Call An Uber");
                                                     requestActive = false;
@@ -217,6 +218,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
 
 
     public void showDriverInMap(ParseGeoPoint driverLocation, ParseGeoPoint userLocation) {
+        mMap.clear();
         LatLng driverLocationLatLng = new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude());
 
         LatLng requestLocationLatLng = new LatLng(userLocation.getLatitude(), userLocation.getLongitude());
