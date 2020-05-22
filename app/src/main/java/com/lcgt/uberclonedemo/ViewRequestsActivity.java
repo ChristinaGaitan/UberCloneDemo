@@ -24,6 +24,7 @@ import com.parse.ParseException;
 import com.parse.ParseGeoPoint;
 import com.parse.ParseObject;
 import com.parse.ParseQuery;
+import com.parse.ParseUser;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -137,6 +138,10 @@ public class ViewRequestsActivity extends AppCompatActivity {
             public void onLocationChanged(Location location) {
                 updateListViewMethod(location);
                 Log.i("Method", "setLocationManagerAndListener");
+
+                ParseGeoPoint driverGeopoint = new ParseGeoPoint(location.getLatitude(), location.getLongitude());
+                ParseUser.getCurrentUser().put("location", driverGeopoint);
+                ParseUser.getCurrentUser().saveInBackground();
             }
 
             @Override
