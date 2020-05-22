@@ -36,4 +36,14 @@ tools:context=".RiderActivity" >
         android:layout_marginEnd="25dp"
         android:onClick="logOut"
         android:text="Log out" />
+
+    <TextView
+        android:id="@+id/infoTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginStart="23dp"
+        android:layout_marginBottom="33dp"
+        android:textColor="@color/common_google_signin_btn_text_dark_focused" />
 </RelativeLayout>
