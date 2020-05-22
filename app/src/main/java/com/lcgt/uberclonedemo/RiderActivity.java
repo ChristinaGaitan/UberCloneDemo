@@ -127,7 +127,35 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void done(List<ParseObject> objects, ParseException e) {
                 if(e == null && objects.size() > 0) {
-                    infoTextView.setText("Your driver is on the way!");
+                    String driverUsername = objects.get(0).getString("driverUsername");
+                    ParseQuery<ParseUser> userQuery = ParseUser.getQuery();
+                    userQuery.whereEqualTo("username", driverUsername);
+
+                    userQuery.findInBackground(new FindCallback<ParseUser>() {
+                        @Override
+                        public void done(List<ParseUser> objects, ParseException e) {
+                            if(e == null && objects.size() > 0) {
+                                ParseGeoPoint driverLocation = objects.get(0).getParseGeoPoint("location");
+
+                                if (ContextCompat.checkSelfPermission(RiderActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                                    // Permission already granted
+
+                                    Location lastKnownLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+
+                                    if (lastKnownLocation != null) {
+                                        // Convert lastKnownLocation to GeoPoint
+                                        ParseGeoPoint userLocation = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
+
+                                        Double distanceInKilometers = driverLocation.distanceInKilometersTo(userLocation);
+                                        Double distanceInMilesOneDP = (double) Math.round(distanceInKilometers * 10) / 10;
+                                        infoTextView.setText("Your driver is "+ distanceInMilesOneDP +" Km way!");
+                                    }
+                                }
+                            }
+                        }
+                    });
+
+
                     callUberButton.setVisibility(View.INVISIBLE);
                 }
 

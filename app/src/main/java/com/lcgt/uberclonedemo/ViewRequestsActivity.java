@@ -108,8 +108,8 @@ public class ViewRequestsActivity extends AppCompatActivity {
                         if (objects.size()> 0) {
                             for (ParseObject requestObject : objects) {
                                 ParseGeoPoint requestObjectLocation = (ParseGeoPoint) requestObject.get("location");
-                                Double distanceInMiles = geoPointLocation.distanceInKilometersTo(requestObjectLocation);
-                                Double distanceInMilesOneDP = (double) Math.round(distanceInMiles * 10) / 10;
+                                Double distanceInKilometers = geoPointLocation.distanceInKilometersTo(requestObjectLocation);
+                                Double distanceInMilesOneDP = (double) Math.round(distanceInKilometers * 10) / 10;
 
                                 requests.add(distanceInMilesOneDP.toString() + " Km");
 
