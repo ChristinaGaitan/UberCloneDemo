@@ -146,7 +146,7 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                         @Override
                         public void done(List<ParseUser> objects, ParseException e) {
                             if(e == null && objects.size() > 0) {
-                                ParseGeoPoint driverLocation = objects.get(0).getParseGeoPoint("location");
+                                final ParseGeoPoint driverLocation = objects.get(0).getParseGeoPoint("location");
 
                                 if (ContextCompat.checkSelfPermission(RiderActivity.this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
                                     // Permission already granted
@@ -157,34 +157,64 @@ public class RiderActivity extends FragmentActivity implements OnMapReadyCallbac
                                         // Convert lastKnownLocation to GeoPoint
                                         ParseGeoPoint userLocation = new ParseGeoPoint(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude());
 
-                                        calculateDistanceBetweenDriverAndUser(driverLocation, userLocation);
-                                        showDriverInMap(driverLocation, userLocation);
+                                        Double distanceInKilometers = driverLocation.distanceInKilometersTo(userLocation);
+
+                                        if(distanceInKilometers < 0.1) {
+                                            infoTextView.setText("Your driver is here!");
+
+                                            deleteActiveRequests();
+                                            handler.postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    callUberButton.setVisibility(View.VISIBLE);
+                                                    callUberButton.setText("Call An Uber");
+                                                    requestActive = false;
+                                                    driverActive = false;
+                                                }
+                                            }, 5000);
+
+                                        } else {
+                                            Double distanceInMilesOneDP = (double) Math.round(distanceInKilometers * 10) / 10;
+                                            infoTextView.setText("Your driver is "+ distanceInMilesOneDP +" Km way!");
+
+                                            showDriverInMap(driverLocation, userLocation);
+
+                                            callUberButton.setVisibility(View.INVISIBLE);
+
+                                            handler.postDelayed(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    checkForUpdates();
+                                                }
+                                            }, 2000);
+                                        }
                                     }
                                 }
                             }
                         }
                     });
 
-
-                    callUberButton.setVisibility(View.INVISIBLE);
                 }
-
-                handler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        checkForUpdates();
-                    }
-                }, 2000);
             }
         });
     }
 
-    public void calculateDistanceBetweenDriverAndUser(ParseGeoPoint driverLocation, ParseGeoPoint userLocation) {
-        Double distanceInKilometers = driverLocation.distanceInKilometersTo(userLocation);
-        Double distanceInMilesOneDP = (double) Math.round(distanceInKilometers * 10) / 10;
+    public void deleteActiveRequests() {
+        ParseQuery<ParseObject> query = ParseQuery.getQuery("Request");
+        query.whereEqualTo("username", ParseUser.getCurrentUser().getUsername());
 
-        infoTextView.setText("Your driver is "+ distanceInMilesOneDP +" Km way!");
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> objects, ParseException e) {
+                if(e == null) {
+                    for(ParseObject object : objects) {
+                        object.deleteInBackground();
+                    }
+                }
+            }
+        });
     }
+
 
     public void showDriverInMap(ParseGeoPoint driverLocation, ParseGeoPoint userLocation) {
         LatLng driverLocationLatLng = new LatLng(driverLocation.getLatitude(), driverLocation.getLongitude());
